@@ -31,27 +31,29 @@ class ProductCategory(models.Model):
 
 
 class Product(BaseModel):
-    def __init__(self,
-        awin_product_id,
-        name,
-        description,
-        price,
-        image_url,
-        is_active,
-        awin_deep_link,
-        merchant_id,
-        loader_link,
-        category="default", ):
-        self.awin_product_id= awin_product_id
-        self.name= name
-        self.description= description
-        self.price= price
-        self.image_url= image_url
-        self.is_active = is_active
-        self.awin_deep_link= awin_deep_link
-        self.merchant_id= merchant_id
-        self.loader_link = loader_link
-        # self.category= category
+    # def __init__(self):
+    #     pass;
+    # def __init__(self,
+    #     awin_product_id="",
+    #     name="",
+    #     description="",
+    #     price=0,
+    #     image_url="",
+    #     is_active="",
+    #     awin_deep_link="",
+    #     merchant_id="",
+    #     loader_link="",
+    #     category="default", ):
+    #     self.awin_product_id= awin_product_id
+    #     self.name= name
+    #     self.description= description
+    #     self.price= price
+    #     self.image_url= image_url
+    #     self.is_active = is_active
+    #     self.awin_deep_link= awin_deep_link
+    #     self.merchant_id= merchant_id
+    #     self.loader_link = loader_link
+    #     # self.category= category
 
 
 
@@ -59,16 +61,16 @@ class Product(BaseModel):
     description = models.TextField()
     price = models.FloatField()
     category = models.ForeignKey(
-        ProductCategory, on_delete=models.PROTECT, related_name='products'
+        ProductCategory, on_delete=models.PROTECT, related_name='products',blank=True, null=True
     )
     merchant = models.ForeignKey(
-        ProductMerchant, on_delete=models.PROTECT, related_name='products'
+        ProductMerchant, on_delete=models.PROTECT, related_name='products',blank=True, null=True
     )
     image_url = models.CharField(max_length=1000, null=True, blank=True)
     is_active = models.BooleanField(default=False)
     best_deal = models.BooleanField(default=False)
     loader_link = models.ForeignKey(
-        AwinProductLink, blank=True, null=True, on_delete=models.PROTECT
+        AwinProductLink, blank=True, null=True, on_delete=models.PROTECT,
     )
     awin_deep_link = models.CharField(max_length=1000, null=True, blank=True)
     awin_product_id = models.CharField(max_length=255, blank=True, null=True)

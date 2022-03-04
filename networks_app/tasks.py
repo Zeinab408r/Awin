@@ -9,10 +9,11 @@ logger = logging.getLogger('network_app.worker')
 
 
 @shared_task
-def mask_all_products():
+def update_and_add_products():
     logger.info(">>>>>> STARTING: UPDATE PRODUCTS FROM AWIN LINKS. <<<<<<")
     # use this link to download a zip file containing products
-    links = ["https://ui2.awin.com/affiliates/shopwindow/datafeed_metadata.php?user=712705&password=cb06eaeb32ac6e7fd42f72a4e1675a38&format=CSV&filter=SUBSCRIBED&compression=zip"]
+    links = AwinProductLink.objects.filter(state=AwinProductLinkStateEnum.ACTIVE.value)
+    print("I am here in side update_and_add_products function:)")
     for link in links:
         product_refresher = ProductRefresher(link=link)
         product_refresher.execute()
