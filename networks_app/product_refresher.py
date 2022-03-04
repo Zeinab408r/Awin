@@ -11,11 +11,26 @@ from products.models import Product, ProductMerchant
 
 logger = logging.getLogger('network_app.product_refresher')
 
+mapping_field = {
+    'aw_deep_link': "Default Clickthrough",
+    'product_name': "Merchant Name",
+    'aw_product_id': "Merchant ID",
+    'merchant_name': "Merchant Name",
+    'merchant_id': "Merchant ID",
+    'aw_image_url': "Display URL",
+    # 'currency',
+    # 'brand_name',
+    # 'brand_id',
+    'in_stock': "Mastertag",
+    'search_price': "Merchant ID",
+    'description': "Description",
+}
+
 
 class ProductRefresher:
     def __init__(self, link):
         self.link = link
-        self.gz_file_address = 'downloads/products.gz'
+        self.downloaded_file_address = 'downloads/products.csv'
         self.csv_file_address = 'downloads/products.csv'
         self.mapped_merchants = {}
         self.required_fields = [
@@ -25,7 +40,9 @@ class ProductRefresher:
             'merchant_name',
             'merchant_id',
             'aw_image_url',
+            'search_price',
             'description',
+            'in_stock'
         ]
 
     def download(self):
@@ -33,13 +50,13 @@ class ProductRefresher:
         r = requests.get(self.link.link_address, allow_redirects=True)
         logger.info('Download done with status:' + str(r.status_code))
         logger.info(r.request.body)
-        open(self.gz_file_address, 'wb').write(r.content)
+        open(self.downloaded_file_address, 'wb').write(r.content)
         logger.info('New products csv downloaded.')
         logger.info('============================')
 
     def extract(self):
         logger.info('Extracting products csv file.')
-        gz_file = gzip.GzipFile(self.gz_file_address, 'rb')
+        gz_file = gzip.GzipFile(self.downloaded_file_address, 'rb')
         data = gz_file.read()
         gz_file.close()
 
@@ -66,7 +83,7 @@ class ProductRefresher:
         headers, items = self.serialize()
         fields = {}
         for field in self.required_fields:
-            field_index = headers.index(field)
+            field_index = headers.index(mapping_field[field])
             fields[field] = field_index
         logger.info('Mapping is completed!')
         logger.info('=================')
@@ -82,7 +99,7 @@ class ProductRefresher:
         merchant_ids = []
         for index, merchant_name in merchants.items():
             merchants_objs.append(
-                ProductMerchant(
+                ProductMerchant.create(
                     awin_merchant_id=index, loader_link=self.link, name=merchant_name
                 )
             )
@@ -147,26 +164,28 @@ class ProductRefresher:
             aw_ids.append(aw_id)
             aw_indexed_items[aw_id] = item
 
-        existing_items = Product.objects.filter(awin_product_id__in=aw_ids).exclude(updated_by_admin=True)
+        existing_items = Product.objects.filter(
+            awin_product_id__in=aw_ids)
         update_list = []
         for existing in existing_items:
             item = aw_indexed_items.pop(str(existing.awin_product_id))
             existing.name = item[fields['product_name']]
             existing.description = item[fields['description']]
-            existing.price = item[fields['search_price']]
-            existing.is_active = item[fields['in_stock']]
+            # existing.price = item[fields['search_price']]
+            # existing.is_active = item[fields['in_stock']]
             existing.loader_link = self.link
             existing.awin_deep_link = item[fields['aw_deep_link']]
             update_list.append(existing)
 
-        updated_by_admin_list = Product.objects.filter(awin_product_id__in=aw_ids, updated_by_admin=True)
+        updated_by_admin_list = Product.objects.filter(
+            awin_product_id__in=aw_ids, )
         for updated in updated_by_admin_list:
             item = aw_indexed_items.pop(str(updated.awin_product_id))
             updated.name = item[fields['product_name']]
             updated.description = item[fields['description']]
             updated.price = item[fields['search_price']]
-            if not item[fields['in_stock']]:
-                updated.is_active = False
+            # if not item[fields['in_stock']]:
+            #     updated.is_active = False
             updated.loader_link = self.link
             updated.awin_deep_link = item[fields['aw_deep_link']]
             update_list.append(updated)
@@ -180,9 +199,10 @@ class ProductRefresher:
                 description=item[fields['description']],
                 price=item[fields['search_price']],
                 image_url=image_url,
-                is_active=item[fields['in_stock']],
+                # is_active=item[fields['in_stock']],
                 awin_deep_link=item[fields['aw_deep_link']],
-                merchant_id=self.mapped_merchants[int(item[fields['merchant_id']])],
+                merchant_id=self.mapped_merchants[int(
+                    item[fields['merchant_id']])],
                 loader_link=self.link,
             )
             create_list.append(product)
@@ -218,7 +238,7 @@ class ProductRefresher:
                     'description',
                     'price',
                     'image_url',
-                    'is_active',
+                    # 'is_active',
                     'loader_link',
                     'awin_deep_link',
                 ],
@@ -231,8 +251,8 @@ class ProductRefresher:
         print(datetime.now())
         logger.info('Executing AWIN product refresher!')
         logger.info('=================================')
-        self.download()
-        self.extract()
+        # self.download()
+        # self.extract()
         self.update_database()
         logger.info('Everything seems fine.')
         logger.info('======================')

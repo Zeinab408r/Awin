@@ -4,10 +4,13 @@ from networks_app.models import AwinProductLink
 
 
 class ProductMerchant(BaseModel):
-    def __init__(self, awin_merchant_id, loader_link, name):
-        self.awin_merchant_id= awin_merchant_id
+    @staticmethod
+    def create(awin_merchant_id, loader_link, name):
+        self = ProductMerchant()
+        self.awin_merchant_id = awin_merchant_id
         self.loader_link = loader_link
-        self.name= name
+        self.name = name
+        return self
 
     name = models.CharField(max_length=255)
     loader_link = models.ForeignKey(
@@ -27,7 +30,6 @@ class ProductCategory(models.Model):
 
     def __str__(self):
         return f'PCategory|ID:{self.id}|Slug:{self.slug}'
-
 
 
 class Product(BaseModel):
@@ -55,20 +57,18 @@ class Product(BaseModel):
     #     self.loader_link = loader_link
     #     # self.category= category
 
-
-
-    name = models.CharField(max_length=1000)
-    description = models.TextField()
-    price = models.FloatField()
+    name = models.CharField(max_length=1000, null=True)
+    description = models.TextField(null=True)
+    price = models.FloatField(null=True)
     category = models.ForeignKey(
-        ProductCategory, on_delete=models.PROTECT, related_name='products',blank=True, null=True
+        ProductCategory, on_delete=models.PROTECT, related_name='products', blank=True, null=True
     )
     merchant = models.ForeignKey(
-        ProductMerchant, on_delete=models.PROTECT, related_name='products',blank=True, null=True
+        ProductMerchant, on_delete=models.PROTECT, related_name='products', blank=True, null=True
     )
     image_url = models.CharField(max_length=1000, null=True, blank=True)
-    is_active = models.BooleanField(default=False)
-    best_deal = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False, null=True)
+    best_deal = models.BooleanField(default=False, null=True)
     loader_link = models.ForeignKey(
         AwinProductLink, blank=True, null=True, on_delete=models.PROTECT,
     )
